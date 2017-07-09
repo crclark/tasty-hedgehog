@@ -7,14 +7,15 @@ import Control.Monad (when)
 import Data.Typeable
 import Data.List
 
-import Test.Tasty.Providers
+import Test.Tasty.Providers as P
 import Test.Tasty.Options
 
 import Hedgehog
 import Hedgehog.Internal.Property
 import Hedgehog.Internal.Runner
-import Hedgehog.Internal.Report
+import Hedgehog.Internal.Report as HR
 import Hedgehog.Internal.Seed as Seed
+import Hedgehog.Internal.Config
 
 data HP = HP TestName Property
   deriving (Typeable)
@@ -84,41 +85,30 @@ instance IsOption HedgehogShrinkLimit where
 reportToProgress :: Int
                  -> Int
                  -> Int
-                 -> Report
-                 -> Progress
+                 -> Report HR.Progress
+                 -> P.Progress
 reportToProgress testLimit discardLimit shrinkLimit (Report testsDone discardsDone status) =
   let
     ratio x y = 1.0 * fromIntegral x / fromIntegral y
   in
     -- TODO add details for tests run / discarded / shrunk
     case status of
-      Waiting ->
-        Progress "Waiting" (ratio testsDone testLimit)
       Running ->
         Progress "Running" (ratio testsDone testLimit)
       Shrinking fr ->
         Progress "Shrinking" (ratio (failureShrinks fr) shrinkLimit)
-      Failed _ ->
-        Progress "Failed" 1.0
-      GaveUp ->
-        Progress "Gave up" 1.0
-      OK ->
-        Progress "OK" 1.0
 
 reportOutput :: Bool
              -> Bool
              -> String
-             -> Report
+             -> Report HR.Result
              -> IO String
 reportOutput verbose showReplay name report@(Report tests discards status) = do
   when verbose $ do
-    s <- renderReport (Just (PropertyName name)) report
+    s <- renderResult (Just EnableColor) (Just (PropertyName name)) report
     putStr s
   -- TODO add details for tests run / discarded / shrunk
   return $ case status of
-    Waiting -> "Waiting"
-    Running -> "Running"
-    Shrinking fr -> "Shrinking"
     Failed fr ->
       let
         size = failureSize fr
