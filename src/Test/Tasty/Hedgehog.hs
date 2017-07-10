@@ -117,7 +117,7 @@ reportOutput verbose showReplay name report@(Report tests discards status) = do
           else ""
       in
         "Failed\n" ++ s ++ "\n" ++ replayStr
-    GaveUp -> "Gave up"
+    GaveUp -> s ++ "\nGave up"
     OK -> "OK"
 
 instance IsTest HP where
