@@ -104,9 +104,7 @@ reportOutput :: Bool
              -> Report HR.Result
              -> IO String
 reportOutput verbose showReplay name report@(Report tests discards status) = do
-  when verbose $ do
-    s <- renderResult (Just EnableColor) (Just (PropertyName name)) report
-    putStr s
+  s <- renderResult (Just EnableColor) (Just (PropertyName name)) report
   -- TODO add details for tests run / discarded / shrunk
   return $ case status of
     Failed fr ->
@@ -118,7 +116,7 @@ reportOutput verbose showReplay name report@(Report tests discards status) = do
           then "\nUse \"--hedgehog-replay " ++ show size ++ " " ++ show seed ++ "\" to reproduce."
           else ""
       in
-        "Failed" ++ replayStr
+        "Failed\n" ++ s ++ "\n" ++ replayStr
     GaveUp -> "Gave up"
     OK -> "OK"
 
